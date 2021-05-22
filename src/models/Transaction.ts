@@ -11,10 +11,10 @@ class Transaction {
   @Column()
   type: 'income' | 'outcome';
 
-  @Column('decimal')
+  @Column()
   value: number;
 
-  @ManyToOne(()=> Category)
+  @ManyToOne(()=> Category,{eager:true})
   @JoinColumn({name : 'category_id'})
   category: Category;
 
