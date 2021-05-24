@@ -2,6 +2,9 @@ import { Router } from 'express';
 import CreateTransactionService from '../services/CreateTransactionService';
 import DeleteTransactionService from '../services/DeleteTransactionService';
 import GetTransactionsService from '../services/GetTransactionsService';
+import csvParse from 'csv-parse';
+import fs from 'fs';
+import path from 'path';
 
 
 // import TransactionsRepository from '../repositories/TransactionsRepository';
@@ -39,7 +42,37 @@ transactionsRouter.delete('/:id', async (request, response) => {
 });
 
 transactionsRouter.post('/import', async (request, response) => {
-  // TODO
+
+  async function loadCSV(filePath: string): any[] {
+    const readCSVStream = fs.createReadStream(csvFilePath);
+  
+    const parseStream = csvParse({ 
+      from_line: 2,
+      ltrim: true,
+      rtrim: true,
+    });
+    
+    const parseCSV = readCSVStream.pipe(parseStream);
+  
+    const lines = [];
+  
+    parseCSV.on('data', line => {
+      lines.push(line);
+    });
+    
+    await new Promise(resolve => {
+      parseCSV.on('end', resolve);
+    });
+    
+    return lines;
+  }
+  const csvFilePath = path.resolve(__dirname,'..','..','tmp','import_template.csv');
+  const data = await loadCSV(csvFilePath);
+  
+console.log(data);
+
+  response.json(data)
+
 });
 
 export default transactionsRouter;
