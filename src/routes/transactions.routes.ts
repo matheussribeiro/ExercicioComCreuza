@@ -2,17 +2,12 @@ import { Router } from 'express';
 import CreateTransactionService from '../services/CreateTransactionService';
 import DeleteTransactionService from '../services/DeleteTransactionService';
 import GetTransactionsService from '../services/GetTransactionsService';
-import csvParse from 'csv-parse';
-import fs from 'fs';
-import path from 'path';
-
-
-// import TransactionsRepository from '../repositories/TransactionsRepository';
-// import CreateTransactionService from '../services/CreateTransactionService';
-// import DeleteTransactionService from '../services/DeleteTransactionService';
-// import ImportTransactionsService from '../services/ImportTransactionsService';
+import ImportTransactionsService from '../services/ImportTransactionsService';
+import multer from 'multer';
+import uploadConfig from '../config/upload';
 
 const transactionsRouter = Router();
+const upload = multer(uploadConfig);
 
 transactionsRouter.get('/', async (request, response) => {
   const getTransactions = new GetTransactionsService()
@@ -41,37 +36,13 @@ transactionsRouter.delete('/:id', async (request, response) => {
 
 });
 
-transactionsRouter.post('/import', async (request, response) => {
+transactionsRouter.post('/import',upload.single('csv'), async (request, response) => {
 
-  async function loadCSV(filePath: string): any[] {
-    const readCSVStream = fs.createReadStream(csvFilePath);
-  
-    const parseStream = csvParse({ 
-      from_line: 2,
-      ltrim: true,
-      rtrim: true,
-    });
-    
-    const parseCSV = readCSVStream.pipe(parseStream);
-  
-    const lines = [];
-  
-    parseCSV.on('data', line => {
-      lines.push(line);
-    });
-    
-    await new Promise(resolve => {
-      parseCSV.on('end', resolve);
-    });
-    
-    return lines;
-  }
-  const csvFilePath = path.resolve(__dirname,'..','..','tmp','import_template.csv');
-  const data = await loadCSV(csvFilePath);
-  
-console.log(data);
+  const importTransactionService = new ImportTransactionsService()
 
-  response.json(data)
+  const importCsv = await importTransactionService.execute()
+
+  response.json(importCsv)
 
 });
 
